@@ -92,7 +92,7 @@ export const DOMAIN_ALIAS = {
   "hnrss.org": "Hacker News",
 };
 
-// 编号序号 emoji（1~10 实心 keycap；11~20 空心 circled，正常每版≤8条用不到）
+// 编号序号 emoji（1~10 实心 keycap；11~20 空心 circled，第 11 条用 ⑪）
 export const REPORT_NUMBER_EMOJI = [
   "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟",
   "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳",
@@ -103,7 +103,7 @@ export const CAPTION_LIMIT = 1024;          // Telegram 图片 caption 上限
 export const MAX_MESSAGE_LENGTH = 4096;     // Telegram 文本消息上限
 export const REPORT_TRAILING_BLANK_LINES = 2; // 末尾留白：避免最后一行与时间戳贴太近
 export const SUMMARY_MAX_LENGTH = 150;      // 摘要截断长度（RSS 原文处理用；消息已不再展示摘要）
-export const REPORT_MAX_ITEMS = 8;           // 每版固定推送的条目数（取前 N 家，其余丢弃）
+export const REPORT_MAX_ITEMS = 11;          // 每版固定推送的条目数（取前 N 家，其余丢弃）
 export const KEEP_DAYS = 30;                // 缓存保留天数
 export const PREFER_TODAY = true;           // 优先推送当天（北京时间）发布的内容
 export const REQUEST_TIMEOUT = 12000;        // 单次抓取超时（毫秒）

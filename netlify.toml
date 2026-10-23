@@ -1,0 +1,20 @@
+# Netlify 配置（独立站点部署用）
+# 若把 bot 并入已有站点（如 myogg 博客），通常不需要此文件——
+# 只需把 netlify/functions/ 复制进该站点仓库，并装上依赖、配好环境变量即可。
+# 函数定时（schedule）写在代码里（rss-report.js 的 export const config），
+# 无需在此重复声明。
+
+[build]
+  # 本仓库无静态构建产物，发布一个极简 public 目录（避免把源码/node_modules 当静态站发布）
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  # 定时函数默认 30s 上限；此处无需额外配置
+  # node_bundler = "esbuild"  # 如遇打包问题可显式指定
+
+# 早报 / 晚报定时触发（北京时间 10:03 / 17:03 = UTC 02:03 / 09:03）
+# 函数内根据触发时刻自动判定 morning / evening。
+# 注意：Netlify cron 为 UTC，且夏令时不会自动换算。
+[functions."rss-report"]
+  schedule = "3 2,9 * * *"

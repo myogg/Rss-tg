@@ -60,11 +60,6 @@ rss-tg-netlify/
 
 ## 三、部署方式
 
-### 方式 A：作为独立站点部署（当前线上即此方式）
-
-1. 把本仓库（`rss-tg-netlify/`）作为新站点连接（或拖拽）到 Netlify。
-2. 后台配置环境变量（见第四节）。
-3. 部署后 `netlify.toml` 里的 `[functions."rss-report"] schedule` 会自动注册定时任务。
 
 > 用 **Netlify CLI** 部署（本仓库即如此）：
 > ```bash

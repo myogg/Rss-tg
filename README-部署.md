@@ -15,7 +15,7 @@
 - 每天 **北京时间 10:03（早报）/ 17:03（晚报）** 自动抓取 **24 个** AI/科技 RSS 源
 - 用 **DeepSeek** 仅把**标题**译成中文；摘要保留 RSS 原文（未配 key 则标题英文原文照发）
 - 用 **Bing 每日壁纸**作封面，叠印「**北方的博客 早报** / **北方的博客 晚报**」（同一行、同字号）
-- 消息格式：**实序号 `1️⃣`–`8️⃣` + 公司名（超链接指向文章）+ 摘要（纯文本）**
+- 消息格式：**实序号 `1️⃣`–`8️⃣` + 公司名（超链接指向文章）+ 文章标题（纯文本，已译中文）**
 - **每版固定取前 8 家**，其余丢弃；首条作封面 caption，装不下自动续篇（纯文本，≤4096）
 - 用 **Netlify Blobs** 做去重缓存（30 天滚动），避免重复推送
 
@@ -177,7 +177,7 @@ npx netlify dev
 | 增删 RSS 源 / 调整顺序 | `netlify/functions/_lib/config.js` 的 `FEEDS` 数组（靠前的源优先展示） |
 | 源的显示名（如「谷歌」） | `config.js` 的 `COMPANY_ALIAS` / `DOMAIN_ALIAS` |
 | 每版条数（默认 8） | `config.js` 的 `REPORT_MAX_ITEMS` |
-| 摘要长度（默认 150 字） | `config.js` 的 `SUMMARY_MAX_LENGTH` |
+| 标题长度 | 不截断（文章标题一般较短，单条消息上限 4096 字符足够） |
 | 推送时间 | `netlify.toml` 的 `schedule` |
 | 封面标题文字「北方的博客」 | `netlify/functions/_lib/image.js` 的 `compose()` |
 | 翻译模型 / 提示词 | `config.js` 的 `DEEPSEEK_MODEL` / `TRANSLATE_PROMPT` |

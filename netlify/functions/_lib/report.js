@@ -8,7 +8,6 @@ import {
   MAX_MESSAGE_LENGTH,
   REPORT_TRAILING_BLANK_LINES,
   COMPANY_ALIAS,
-  SUMMARY_MAX_LENGTH,
 } from "./config.js";
 
 function esc(text) {
@@ -72,24 +71,13 @@ export function buildReportMessages(groups, mode) {
     if (!items || !items.length) continue;
     const art = items[0];
     const company = esc(truncateText(companyAlias(source), 50));
-    const summaryText = art.summary || art.title || "未命名文章";
+    const titleText = art.title || "未命名文章";
     const link = escAttr(art.link || "");
-
-    let summaryLimit = SUMMARY_MAX_LENGTH;
-    const render = (limit) => {
-      const summary = esc(truncateText(summaryText, limit));
-      const num = REPORT_NUMBER_EMOJI[i] || `${i + 1}.`;
-      // 公司名作为超链接（指向文章），其后摘要为纯文本、不加链接
-      return link
-        ? `${num} <a href="${link}"><b>${company}</b></a> ${summary}`
-        : `${num} <b>${company}</b> ${summary}`;
-    };
-
-    let entry = render(summaryLimit);
-    while (visibleLength(entry) > MAX_MESSAGE_LENGTH - 100 && summaryLimit > 20) {
-      summaryLimit = Math.max(20, Math.floor(summaryLimit / 2));
-      entry = render(summaryLimit);
-    }
+    const num = REPORT_NUMBER_EMOJI[i] || `${i + 1}.`;
+    // 公司名作为超链接（指向文章），其后为文章标题（纯文本、不截断、不加链接）
+    const entry = link
+      ? `${num} <a href="${link}"><b>${company}</b></a> ${esc(titleText)}`
+      : `${num} <b>${company}</b> ${esc(titleText)}`;
     entries.push({ source, entry });
   }
 

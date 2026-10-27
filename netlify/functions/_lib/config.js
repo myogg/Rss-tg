@@ -124,7 +124,7 @@ export const USER_AGENT =
 export const DEEPSEEK_API_BASE = "https://api.deepseek.com";
 export const DEEPSEEK_MODEL = "deepseek-chat";
 export const TRANSLATE_PROMPT =
-  "你是科技资讯翻译。把用户给的英文标题译成简洁、地道的简体中文。" +
+  "你是科技资讯翻译。把用户给的英文摘要译成简洁、地道的简体中文，控制在 150 字内。" +
   "要求：1) 品牌名、公司名、产品名、模型名（如 OpenAI、Gemini、Qwen、NVIDIA）保持英文原样，不要音译或意译；" +
   "2) 只输出译文，不要解释、不要加引号；" +
   "3) 保持原意，不要扩写或删减。";

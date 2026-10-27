@@ -174,22 +174,13 @@ export async function collectArticles(cache, apiKey) {
   }
   stats.total = candidates.length;
 
-  // 4) 并发分批翻译（标题 + 摘要 都译为中文；无 key 时整体跳过，回退原文）
-  const translated = await batchTranslate(
-    candidates.map((c) => c.title),
-    apiKey
-  );
-  candidates.forEach((c, i) => {
-    if (translated[i] !== c.title) stats.translated += 1;
-    c.title = translated[i];
-  });
-
-  // 摘要也译为中文（无摘要时回退标题译文）
-  const summarySrc = candidates.map((c) => c.summary || c.title);
+  // 4) 并发分批翻译（仅译摘要；标题不再展示故不翻译，省一半翻译量/耗时）
+  //    无 key 时整体跳过，回退原文；无摘要则留空（消息里只显示公司名）。
+  const summarySrc = candidates.map((c) => c.summary || "");
   const translatedSum = await batchTranslate(summarySrc, apiKey);
   candidates.forEach((c, i) => {
-    const s = (translatedSum[i] || "").trim();
-    c.summary = s || c.title;
+    if (c.summary && translatedSum[i] !== c.summary) stats.translated += 1;
+    c.summary = (translatedSum[i] || "").trim();
   });
 
   // 5) 组装最终文章（摘要截断到 SUMMARY_MAX_LENGTH 后在消息中展示译文摘要）

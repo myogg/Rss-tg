@@ -8,6 +8,7 @@ import {
   MAX_MESSAGE_LENGTH,
   REPORT_TRAILING_BLANK_LINES,
   COMPANY_ALIAS,
+  SUMMARY_MAX_LENGTH,
 } from "./config.js";
 
 function esc(text) {
@@ -72,12 +73,17 @@ export function buildReportMessages(groups, mode) {
     const art = items[0];
     const company = esc(truncateText(companyAlias(source), 50));
     const titleText = art.title || "未命名文章";
+    const summaryText = art.summary || "";
     const link = escAttr(art.link || "");
     const num = REPORT_NUMBER_EMOJI[i] || `${i + 1}.`;
     // 公司名作为超链接（指向文章），其后为文章标题（纯文本、不截断、不加链接）
-    const entry = link
+    const titleLine = link
       ? `${num} <a href="${link}"><b>${company}</b></a> ${esc(titleText)}`
       : `${num} <b>${company}</b> ${esc(titleText)}`;
+    // 摘要（译文、≤150字、纯文本、不链接）另起一行
+    const entry = summaryText
+      ? `${titleLine}\n${esc(truncateText(summaryText, SUMMARY_MAX_LENGTH))}`
+      : titleLine;
     entries.push({ source, entry });
   }
 

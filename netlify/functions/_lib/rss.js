@@ -174,7 +174,7 @@ export async function collectArticles(cache, apiKey) {
   }
   stats.total = candidates.length;
 
-  // 4) 并发分批翻译（仅译标题，摘要保留原文）
+  // 4) 并发分批翻译（标题 + 摘要 都译为中文；无 key 时整体跳过，回退原文）
   const translated = await batchTranslate(
     candidates.map((c) => c.title),
     apiKey
@@ -184,7 +184,15 @@ export async function collectArticles(cache, apiKey) {
     c.title = translated[i];
   });
 
-  // 5) 组装最终文章（摘要保留原文、仅截断；消息中摘要为原始语言纯文本）
+  // 摘要也译为中文（无摘要时回退标题译文）
+  const summarySrc = candidates.map((c) => c.summary || c.title);
+  const translatedSum = await batchTranslate(summarySrc, apiKey);
+  candidates.forEach((c, i) => {
+    const s = (translatedSum[i] || "").trim();
+    c.summary = s || c.title;
+  });
+
+  // 5) 组装最终文章（摘要截断到 SUMMARY_MAX_LENGTH 后在消息中展示译文摘要）
   const articles = candidates.map((c) => {
     let summary = c.summary || "";
     if (summary.length > SUMMARY_MAX_LENGTH) summary = summary.slice(0, SUMMARY_MAX_LENGTH).trimEnd() + "…";

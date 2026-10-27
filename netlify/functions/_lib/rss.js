@@ -47,6 +47,21 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+// 从原始 HTML 取正文第一段（纯文本、≤150 字），用于「无摘要」时的兜底展示。
+// 思路：块级标签转换行 → 去标签 → 解码实体 → 取首个非空段 → 截断。
+function firstParagraph(html) {
+  if (!html) return "";
+  let s = html
+    .replace(/<\s*(script|style)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, " ") // 去掉脚本/样式
+    .replace(/<\s*(br|\/p|\/div|\/li|\/h[1-6]|\/tr)\s*>/gi, "\n") // 块级结束转换行
+    .replace(/<[^>]+>/g, " "); // 去剩余标签
+  s = s.replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&#39;/gi, "'").replace(/&quot;/gi, '"');
+  const paras = s.split(/\n+/).map((p) => p.replace(/\s+/g, " ").trim()).filter(Boolean);
+  if (!paras.length) return "";
+  const first = paras[0];
+  return first.length > SUMMARY_MAX_LENGTH ? first.slice(0, SUMMARY_MAX_LENGTH).trimEnd() + "…" : first;
+}
+
 async function fetchFeed(url) {
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
@@ -149,7 +164,7 @@ export async function collectArticles(cache, apiKey) {
         key,
         link: rawLink,
         title: item.title || "无标题",
-        summary: item.summary || "",
+        summary: item.summary || firstParagraph(item.contentHtml),
         source,
         image: item.image || null,
         logo,

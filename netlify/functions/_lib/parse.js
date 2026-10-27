@@ -185,6 +185,9 @@ function extractItems(channelBlock, logo) {
     content: cleanText(
       [...getTagContents(b, "content:encoded")][0] || [...getTagContents(b, "content")][0] || ""
     ),
+    // 原始 HTML（保留段落换行），供「无摘要时取正文第一段」使用
+    contentHtml:
+      [...getTagContents(b, "content:encoded")][0] || [...getTagContents(b, "content")][0] || "",
     image: extractImage(b, logo),
   }));
 }
@@ -199,7 +202,7 @@ function getBlocks(xml, tag) {
 }
 
 // ---------- 对外：解析整个 feed ----------
-// 返回 { title, logo, items: [{title, link, pubDate, summary, content}] }
+// 返回 { title, logo, items: [{title, link, pubDate, summary, content, contentHtml}] }
 export function parseFeed(xml) {
   if (!xml || typeof xml !== "string") return { title: "", logo: "", items: [] };
 

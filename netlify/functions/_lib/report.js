@@ -72,18 +72,13 @@ export function buildReportMessages(groups, mode) {
     if (!items || !items.length) continue;
     const art = items[0];
     const company = esc(truncateText(companyAlias(source), 50));
-    const titleText = art.title || "未命名文章";
     const summaryText = art.summary || "";
     const link = escAttr(art.link || "");
     const num = REPORT_NUMBER_EMOJI[i] || `${i + 1}.`;
-    // 公司名作为超链接（指向文章），其后为文章标题（纯文本、不截断、不加链接）
-    const titleLine = link
-      ? `${num} <a href="${link}"><b>${company}</b></a> ${esc(titleText)}`
-      : `${num} <b>${company}</b> ${esc(titleText)}`;
-    // 摘要（译文、≤150字、纯文本、不链接）另起一行
-    const entry = summaryText
-      ? `${titleLine}\n${esc(truncateText(summaryText, SUMMARY_MAX_LENGTH))}`
-      : titleLine;
+    // 公司名作为超链接（指向文章），其后为译文摘要（纯文本、≤150字、不链接）；无摘要时仅显示公司名
+    const entry = link
+      ? `${num} <a href="${link}"><b>${company}</b></a> ${esc(truncateText(summaryText, SUMMARY_MAX_LENGTH))}`
+      : `${num} <b>${company}</b> ${esc(truncateText(summaryText, SUMMARY_MAX_LENGTH))}`;
     entries.push({ source, entry });
   }
 

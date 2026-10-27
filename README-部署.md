@@ -4,7 +4,7 @@
 解决 GitHub Actions 定时整点排队延迟/丢弃、fork 默认禁用定时、时间漂移等问题。
 
 > 核心结论：Netlify Scheduled Functions **免费默认开启、UTC 准点触发、无 GitHub 那种漂移**。
-> 唯一硬约束是**定时函数 30 秒执行上限**——本实现已通过「抓取与封面并行 + 并发翻译 + 只译标题」把耗时压在 ~25s 内。
+> 唯一硬约束是**定时函数 30 秒执行上限**——本实现已通过「抓取与封面并行 + 并发翻译（标题与摘要）+ 去重」把耗时压在 ~25s 内。
 
 当前线上站点：`https://rss-tg-bot.netlify.app`（独立站点，仓库 `myogg/Rss-tg`）。
 
@@ -15,7 +15,7 @@
 - 每天 **北京时间 10:03（早报）/ 17:03（晚报）** 自动抓取 **24 个** AI/科技 RSS 源
 - 用 **DeepSeek** 把**标题和摘要**都译成中文（未配 key 则标题、摘要均英文原文照发）
 - 用 **Bing 每日壁纸**作封面，叠印「**北方的博客 早报** / **北方的博客 晚报**」（同一行、同字号）
-- 消息格式：**实序号 `1️⃣`–`🔟` + 公司名（超链接指向文章）+ 文章标题（已译中文）；标题下一行是译文摘要（纯文本、≤150 字、不链接）**
+- 消息格式：**实序号 `1️⃣`–`🔟` + 公司名（超链接指向文章）+ 译文摘要（纯文本、≤150 字、不链接）；不再展示文章标题**
 - **每版固定取前 10 家**，其余丢弃；首条作封面 caption，装不下自动续篇（纯文本，≤4096）
 - 用 **Netlify Blobs** 做去重缓存（30 天滚动），避免重复推送
 
@@ -36,7 +36,7 @@ rss-tg-netlify/
 │   └── _lib/
 │       ├── config.js                 # 源列表 FEEDS / 别名 / 常量 / 定时 cron
 │       ├── parse.js                  # 零依赖纯 JS RSS/Atom 解析（替代 fast-xml-parser）
-│       ├── rss.js                    # 抓取 + 并发翻译(仅标题) + 按源分组
+│       ├── rss.js                    # 抓取 + 并发翻译(标题与摘要) + 按源分组
 │       ├── translate.js              # DeepSeek 翻译
 │       ├── report.js                 # 消息构建（1024/4096 截断 + 续篇 + 序号）
 │       ├── store.js                  # Netlify Blobs 去重缓存（本地无 Blobs 时回退内存）
@@ -161,7 +161,7 @@ npx netlify dev
 | 阶段 | 估算 | 优化手段 |
 |---|---|---|
 | 抓取 24 个 RSS（并行） | ~8–15s | 并行 `Promise.all`，单源 12s 超时 |
-| 翻译（仅标题，并发 20） | ~6s | 无 key 时整体跳过；调用失败自动回退英文原文 |
+| 翻译（标题与摘要，并发 20） | ~6s | 无 key 时整体跳过；调用失败自动回退英文原文 |
 | 生成 Bing 封面（与抓取并行） | ~2s | 封面抓取与 RSS 抓取**并行**启动；超时退化为纯渐变 |
 | 推送 Telegram | ~3s | 封面 Buffer 直传，消息间隔 400ms |
 
@@ -176,8 +176,8 @@ npx netlify dev
 |---|---|
 | 增删 RSS 源 / 调整顺序 | `netlify/functions/_lib/config.js` 的 `FEEDS` 数组（靠前的源优先展示） |
 | 源的显示名（如「谷歌」） | `config.js` 的 `COMPANY_ALIAS` / `DOMAIN_ALIAS` |
-| 每版条数（默认 8） | `config.js` 的 `REPORT_MAX_ITEMS` |
-| 标题长度 | 不截断（文章标题一般较短，单条消息上限 4096 字符足够） |
+| 每版条数（默认 10） | `config.js` 的 `REPORT_MAX_ITEMS` |
+| 摘要长度（默认 150 字） | `config.js` 的 `SUMMARY_MAX_LENGTH` |
 | 推送时间 | `netlify.toml` 的 `schedule` |
 | 封面标题文字「北方的博客」 | `netlify/functions/_lib/image.js` 的 `compose()` |
 | 翻译模型 / 提示词 | `config.js` 的 `DEEPSEEK_MODEL` / `TRANSLATE_PROMPT` |

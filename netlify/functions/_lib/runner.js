@@ -97,7 +97,7 @@ export async function previewReport(mode, env) {
   const cache = await loadCache();
   const articles = await collectArticles(cache);
   if (!articles.length) return { mode, skipped: true };
-  const groups = groupBySource(articles);
+  let groups = groupBySource(articles);
   // 与 runReport 保持一致：每版固定取前 REPORT_MAX_ITEMS 家，避免预览把全部源塞进去导致分篇误导
   if (groups.length > REPORT_MAX_ITEMS) {
     groups = groups.slice(0, REPORT_MAX_ITEMS);

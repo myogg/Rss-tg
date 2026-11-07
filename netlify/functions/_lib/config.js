@@ -113,8 +113,8 @@ export const SCAN_DEPTH = 20;                // 每个源最多扫描多少条 e
 export const MAX_ARTICLES_PER_RUN = 20;     // 单次运行最多取几条（单条消息有 Telegram 上限，超出部分在消息构建时截断丢弃）
 
 // 并发翻译批大小（适配 Netlify 定时函数 30s 上限）：每批并发翻译的条目数。
-// 只翻译标题（摘要不展示，无需翻译），60 条 => 3 批并行，整体控制在 ~6s 内。
-export const TRANSLATE_BATCH = 20;
+// 刻意调小 + 批间留间隔，避免 MyMemory 免费接口对突发并发限流（返回英文兜底）。
+export const TRANSLATE_BATCH = 8;
 
 // 抓取时声明的 UA（老实报身份，微软博客对伪装浏览器 UA 直接 403）
 export const USER_AGENT =

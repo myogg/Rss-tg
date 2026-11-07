@@ -27,19 +27,27 @@ async function translateMyMemory(text) {
   const url =
     "https://api.mymemory.translated.net/get?langpair=en|zh-CN&q=" +
     encodeURIComponent(text.slice(0, 500));
-  try {
-    const resp = await fetch(url, {
-      signal: AbortSignal.timeout(TRANSLATE_TIMEOUT),
-    });
-    if (resp.status !== 200) return null;
-    const data = await resp.json();
-    const t = data?.responseData?.translatedText || "";
-    if (!t || /MYMEMORY WARNING/i.test(t)) return null;
-    return t.trim();
-  } catch (e) {
-    console.log(`  [mymemory skipped] ${e.name}: ${e.message}`);
-    return null;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const resp = await fetch(url, {
+        signal: AbortSignal.timeout(TRANSLATE_TIMEOUT),
+      });
+      if (resp.status !== 200) {
+        console.log(`  [mymemory] HTTP ${resp.status} (attempt ${attempt})`);
+        if (attempt === 1) continue;
+        return null;
+      }
+      const data = await resp.json();
+      const t = data?.responseData?.translatedText || "";
+      if (!t || /MYMEMORY WARNING/i.test(t)) return null;
+      return t.trim();
+    } catch (e) {
+      console.log(`  [mymemory skipped] ${e.name}: ${e.message} (attempt ${attempt})`);
+      if (attempt === 1) continue;
+      return null;
+    }
   }
+  return null;
 }
 
 // DeeplX：POST {base}/{key}/translate  body={text,source_lang,target_lang}  resp={code,data}
@@ -70,13 +78,24 @@ async function translateDeeplx(text) {
   return null;
 }
 
+// 翻译前兜底剥除残余 HTML 标签（解析层已尽量清理，这里再保险一次，
+// 避免 <p>/<img> 等标签被当作翻译文本发出或原样泄漏）。
+function stripHtml(text) {
+  return (text || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // 主入口：已译/中文文本直接返回；优先 DeeplX（若已配置有效 API Key），否则走 MyMemory；失败回退英文。
 export async function translateToZh(text) {
-  if (!text || isMostlyChinese(text)) return text;
+  const clean = stripHtml(text);
+  if (!clean || isMostlyChinese(clean)) return text;
   if (DEEPLX_API_KEY) {
-    const r = await translateDeeplx(text);
+    const r = await translateDeeplx(clean);
     if (r) return r;
   }
-  const r = await translateMyMemory(text);
+  const r = await translateMyMemory(clean);
   return r || text;
 }

@@ -29,6 +29,14 @@ function cleanText(s) {
   return decodeEntities(s).replace(/\s+/g, " ").trim();
 }
 
+// 与 cleanText 类似，但额外剥除 HTML 标签：解码实体 → 去标签 → 合并空白。
+// 用于摘要字段，避免 RSS 的 <p>/<img> 等标签原样泄漏到 Telegram 消息里
+// （在 HTML parse_mode 下 &lt;p&gt; 会渲染成字面 <p>，且纯 <img> 标签无文字无法翻译）。
+function cleanSummary(s) {
+  if (!s) return "";
+  return decodeEntities(s).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 // ---------- 标签抽取 ----------
 // 取出 <tag ...>...</tag> 的全部内容（非贪婪）
 function getTagContents(block, tag) {
@@ -179,7 +187,7 @@ function extractItems(channelBlock, logo) {
         [...getTagContents(b, "dc:date")][0] ||
         ""
     ),
-    summary: cleanText(
+    summary: cleanSummary(
       [...getTagContents(b, "description")][0] || [...getTagContents(b, "summary")][0] || ""
     ),
     content: cleanText(

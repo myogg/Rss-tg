@@ -87,9 +87,11 @@ async function fetchFeed(url) {
 
 // 并发分批翻译：一批同时翻译若干文本，适配 Netlify 30s 上限。
 // 返回与 texts 等长的翻译结果数组（未配置端点时原样返回英文）。
+// 批间留短间隔，避免 MyMemory 免费接口对突发并发限流。
 async function batchTranslate(texts) {
   const out = new Array(texts.length).fill(null);
   for (let i = 0; i < texts.length; i += TRANSLATE_BATCH) {
+    if (i > 0) await sleep(250);
     const slice = texts.slice(i, i + TRANSLATE_BATCH);
     const settled = await Promise.all(slice.map((t) => translateToZh(t || "")));
     slice.forEach((_, j) => {

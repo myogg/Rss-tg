@@ -13,7 +13,7 @@
 ## 一、它现在做什么
 
 - 每天 **北京时间 10:03（早报）/ 17:03（晚报）** 自动抓取 **24 个** AI/科技 RSS 源
-- 用 **DeeplX**（免费 DeepL 兼容接口）仅把**摘要**译成中文（标题不再展示故不翻译；未配 `DEEPLX_API_BASE` 则摘要英文原文照发）
+- 用 **DeeplX**（免费 DeepL 兼容接口）仅把**摘要**译成中文（标题不再展示故不翻译；未配 `DEEPLX_API_KEY` 则摘要英文原文照发）
 - 用 **Bing 每日壁纸**作封面，叠印「**北方的博客 早报** / **北方的博客 晚报**」（同一行、同字号）
 - 消息格式：**实序号 `1️⃣`–`🔟` + 公司名（超链接指向文章）+ 译文摘要（纯文本、≤150 字、不链接）；不再展示文章标题**；**源无摘要时自动取正文第一段（≤150 字）兜底**
 - **每版固定取前 10 家**，其余丢弃；首条作封面 caption，装不下自动续篇（纯文本，≤4096）
@@ -92,8 +92,8 @@ rss-tg-netlify/
 |---|---|---|
 | `TELEGRAM_BOT_TOKEN` | ✅ | BotFather 拿到的 bot token |
 | `TELEGRAM_CHANNEL_ID` | ✅ | 目标频道/群组 ID（`@频道名` 或纯数字 `-100xxxx`） |
-| `DEEPLX_API_BASE` | ⬜ | DeeplX 翻译接口地址（如 `https://你的实例/translate` 去掉 `/translate` 后的基址）；**不填则摘要英文原文照发，不翻译** |
-| `DEEPLX_TOKEN` | ⬜ | 自建 DeeplX 实例的鉴权 token（Bearer）；公共实例一般留空 |
+| `DEEPLX_API_KEY` | ⬜ | DeepLX API 密钥；填写你申请到的 Key，建议勾选 **Contains secret values**；**不填则摘要英文原文照发，不翻译** |
+| `DEEPLX_API_BASE` | ⬜ | DeepLX 服务基址，默认 `https://api.deeplx.org`；只有使用其他实例时才需要填写，填写基址即可，不要在末尾加 `/translate` 或 Key |
 | `PREVIEW_KEY` | ⬜ | 给 `/rss-preview` 与 `/rss-run` 加访问密码；不填则任何人可触发 |
 | `COVER_FETCH_TIMEOUT` | ⬜ | 封面图抓取超时（毫秒，默认 8000）；超时则封面退化为纯渐变兜底 |
 
@@ -141,7 +141,7 @@ npm install
 # 2) 本地验证（拉真实 RSS、构建消息、断言长度/续篇，不发送、不写缓存）
 npm run verify                 # 早报
 npm run verify evening         # 晚报
-DEEPLX_API_BASE=https://你的实例 DEEPLX_TOKEN=xxx npm run verify   # 顺便测真实翻译
+DEEPLX_API_KEY=你的密钥 npm run verify   # 顺便测真实翻译（默认使用 https://api.deeplx.org）
 
 # 3) 本地起 Netlify Dev 调试函数
 npx netlify dev
@@ -181,7 +181,7 @@ npx netlify dev
 | 摘要长度（默认 150 字） | `config.js` 的 `SUMMARY_MAX_LENGTH` |
 | 推送时间 | `netlify.toml` 的 `schedule` |
 | 封面标题文字「北方的博客」 | `netlify/functions/_lib/image.js` 的 `compose()` |
-| 翻译接口 / token | `config.js` 的 `DEEPLX_API_BASE` / `DEEPLX_TOKEN`（从环境变量读取） |
+| DeepLX API Key / 服务基址 | `config.js` 的 `DEEPLX_API_KEY` / `DEEPLX_API_BASE`（从环境变量读取；Key 不要写进代码） |
 
 > 任何函数代码改动后，都需重新部署（CLI 加 `--skip-functions-cache`，或推送连接仓库）才会生效。
 
@@ -195,7 +195,7 @@ npx netlify dev
 | 预览/手动发 403 | 设了 `PREVIEW_KEY` 但没带 `&key=`，或 key 不符 |
 | 没收到推送、日志「无新动态」 | 各源当天无更新或已被缓存去重，属正常静默跳过 |
 | 推送失败 | 去重缓存只在成功后才写入，下个周期自动重试 |
-| 翻译没生效 | 没配 `DEEPLX_API_BASE`，或实例不可达/限流（自动回退英文原文） |
+| 翻译没生效 | 没配 `DEEPLX_API_KEY`，或 Key 无效、实例不可达/限流（自动回退英文原文） |
 | 封面无字 / 中文空白 | 字体 `fonts.js` base64 缺失；函数会正常出图但无文字 |
 | 封面图不显示 | Bing 抓取超时且兜底渐变也失败，函数回退为纯文本首条发送 |
 | 改动后线上没变 | 部署时复用了旧函数包，用 `--skip-functions-cache` 重新部署 |

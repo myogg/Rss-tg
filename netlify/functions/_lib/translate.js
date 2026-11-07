@@ -1,10 +1,10 @@
-// DeeplX 翻译：英文摘要 → 简体中文（免费 DeepL 兼容接口）
-// 未配置 DEEPLX_API_BASE 或调用失败时，原样返回英文（不阻塞推送）。
-// 协议：POST {base}/translate  body={text,source_lang,target_lang}  resp={code,data}
+// DeepLX 翻译：英文摘要 → 简体中文。
+// 未配置 DEEPLX_API_KEY 或调用失败时，原样返回英文（不阻塞推送）。
+// 协议：POST {base}/{key}/translate  body={text,source_lang,target_lang}  resp={code,data}
 
 import {
   DEEPLX_API_BASE,
-  DEEPLX_TOKEN,
+  DEEPLX_API_KEY,
   TRANSLATE_TIMEOUT,
 } from "./config.js";
 
@@ -19,17 +19,15 @@ export function isMostlyChinese(text) {
   return false;
 }
 
-// 已译/中文文本直接返回；未配置端点则回退英文原文。
+// 已译/中文文本直接返回；未配置 API Key 则回退英文原文。
 export async function translateToZh(text) {
   if (!text || isMostlyChinese(text)) return text;
-  if (!DEEPLX_API_BASE) return text;
+  if (!DEEPLX_API_KEY) return text;
   try {
-    const base = DEEPLX_API_BASE.replace(/\/+$/, "");
-    const headers = { "Content-Type": "application/json" };
-    if (DEEPLX_TOKEN) headers["Authorization"] = `Bearer ${DEEPLX_TOKEN}`;
-    const resp = await fetch(`${base}/translate`, {
+    const endpoint = `${DEEPLX_API_BASE}/${encodeURIComponent(DEEPLX_API_KEY)}/translate`;
+    const resp = await fetch(endpoint, {
       method: "POST",
-      headers,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         text: text.slice(0, 500),
         source_lang: "EN",

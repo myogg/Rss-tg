@@ -1,6 +1,7 @@
-// DeepLX 翻译：英文摘要 → 简体中文。
-// 未配置 DEEPLX_API_KEY 或调用失败时，原样返回英文（不阻塞推送）。
-// 协议：POST {base}/{key}/translate  body={text,source_lang,target_lang}  resp={code,data}
+// 翻译：英文摘要 → 简体中文
+// 默认使用 MyMemory 公共翻译（免费、无需 token、零配置，匿名 500 次/天，足够日报用量）。
+// 可选接入 DeeplX：配置 DEEPLX_API_KEY 后，优先走 DeeplX（key 置于 URL 路径，兼容 api.deeplx.org）。
+// 任何失败都回退英文原文，不阻塞推送。
 
 import {
   DEEPLX_API_BASE,
@@ -19,12 +20,33 @@ export function isMostlyChinese(text) {
   return false;
 }
 
-// 已译/中文文本直接返回；未配置 API Key 则回退英文原文。
-export async function translateToZh(text) {
-  if (!text || isMostlyChinese(text)) return text;
-  if (!DEEPLX_API_KEY) return text;
+// MyMemory：GET https://api.mymemory.translated.net/get?q=...&langpair=en|zh-CN
+// 免费、无需 token；匿名 500 次/天。配额耗尽时 translatedText 会变成
+// "MYMEMORY WARNING: ..." 警告文本，需识别并丢弃。
+async function translateMyMemory(text) {
+  const url =
+    "https://api.mymemory.translated.net/get?langpair=en|zh-CN&q=" +
+    encodeURIComponent(text.slice(0, 500));
   try {
-    const endpoint = `${DEEPLX_API_BASE}/${encodeURIComponent(DEEPLX_API_KEY)}/translate`;
+    const resp = await fetch(url, {
+      signal: AbortSignal.timeout(TRANSLATE_TIMEOUT),
+    });
+    if (resp.status !== 200) return null;
+    const data = await resp.json();
+    const t = data?.responseData?.translatedText || "";
+    if (!t || /MYMEMORY WARNING/i.test(t)) return null;
+    return t.trim();
+  } catch (e) {
+    console.log(`  [mymemory skipped] ${e.name}: ${e.message}`);
+    return null;
+  }
+}
+
+// DeeplX：POST {base}/{key}/translate  body={text,source_lang,target_lang}  resp={code,data}
+// 仅当配置了 DEEPLX_API_KEY 时才启用（key 置于 URL 路径，兼容 api.deeplx.org 公益服务）。
+async function translateDeeplx(text) {
+  const endpoint = `${DEEPLX_API_BASE}/${encodeURIComponent(DEEPLX_API_KEY)}/translate`;
+  try {
     const resp = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -40,10 +62,21 @@ export async function translateToZh(text) {
       const result = (data?.data || "").trim();
       if (result) return result;
     } else {
-      console.log(`  [deeplx] HTTP ${resp.status}: ${(await resp.text()).slice(0, 120)}`);
+      console.log(`  [deeplx] HTTP ${resp.status}`);
     }
   } catch (e) {
     console.log(`  [deeplx skipped] ${e.name}: ${e.message}`);
   }
-  return text;
+  return null;
+}
+
+// 主入口：已译/中文文本直接返回；优先 DeeplX（若已配置有效 API Key），否则走 MyMemory；失败回退英文。
+export async function translateToZh(text) {
+  if (!text || isMostlyChinese(text)) return text;
+  if (DEEPLX_API_KEY) {
+    const r = await translateDeeplx(text);
+    if (r) return r;
+  }
+  const r = await translateMyMemory(text);
+  return r || text;
 }

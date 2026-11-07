@@ -120,10 +120,10 @@ export const TRANSLATE_BATCH = 20;
 export const USER_AGENT =
   "Mozilla/5.0 (compatible; RssTgBot/1.0; +https://github.com/myogg/Rss-tg)";
 
-// DeeplX 翻译（免费 DeepL 兼容接口；未配置 DEEPLX_API_BASE 时英文原文照发）
-// 二者均从 Netlify 环境变量读取，不写死、不进 git。
-export const DEEPLX_API_BASE = process.env.DEEPLX_API_BASE || "";
-export const DEEPLX_TOKEN = process.env.DEEPLX_TOKEN || "";
+// DeepLX 翻译：默认使用官方公共实例域名，Key 从 Netlify 环境变量读取。
+// 不写死密钥、不进 git；未配置 DEEPLX_API_KEY 时英文原文照发。
+export const DEEPLX_API_BASE = (process.env.DEEPLX_API_BASE || "https://api.deeplx.org").replace(/\/+$/, "");
+export const DEEPLX_API_KEY = process.env.DEEPLX_API_KEY || "";
 
 // 报头图频道名兜底（取不到 Telegram 频道真实标题时使用）
 export const DEFAULT_CHANNEL_TITLE = "AI 每日速递";

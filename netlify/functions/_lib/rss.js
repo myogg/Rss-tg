@@ -85,14 +85,13 @@ async function fetchFeed(url) {
   return null;
 }
 
-// 并发分批翻译：一批同时翻译若干文本（标题或摘要），适配 Netlify 30s 上限。
-// 返回与 texts 等长的翻译结果数组。
-async function batchTranslate(texts, apiKey) {
-  if (!apiKey) return texts.slice();
+// 并发分批翻译：一批同时翻译若干文本，适配 Netlify 30s 上限。
+// 返回与 texts 等长的翻译结果数组（未配置端点时原样返回英文）。
+async function batchTranslate(texts) {
   const out = new Array(texts.length).fill(null);
   for (let i = 0; i < texts.length; i += TRANSLATE_BATCH) {
     const slice = texts.slice(i, i + TRANSLATE_BATCH);
-    const settled = await Promise.all(slice.map((t) => translateToZh(t || "", apiKey)));
+    const settled = await Promise.all(slice.map((t) => translateToZh(t || "")));
     slice.forEach((_, j) => {
       out[i + j] = settled[j];
     });
@@ -115,8 +114,8 @@ export function groupBySource(articles) {
   return order.map((src) => [src, groups[src]]);
 }
 
-// cache：Map（key=归一化链接，value={title,source,pushed_at}）。apiKey：DeepSeek key 或 null。
-export async function collectArticles(cache, apiKey) {
+// cache：Map（key=归一化链接，value={title,source,pushed_at}）。翻译配置从 config 读取（DEEPLX_*）。
+export async function collectArticles(cache) {
   const stats = { ok: 0, fail: 0, dup: 0, with_img: 0, translated: 0, total: 0 };
   const today = toBeijingDateStr(new Date(Date.now() + 8 * 3600 * 1000));
 
@@ -190,9 +189,9 @@ export async function collectArticles(cache, apiKey) {
   stats.total = candidates.length;
 
   // 4) 并发分批翻译（仅译摘要；标题不再展示故不翻译，省一半翻译量/耗时）
-  //    无 key 时整体跳过，回退原文；无摘要则留空（消息里只显示公司名）。
+  //    未配置 DEEPLX_API_BASE 时整体跳过，回退英文原文；无摘要则留空。
   const summarySrc = candidates.map((c) => c.summary || "");
-  const translatedSum = await batchTranslate(summarySrc, apiKey);
+  const translatedSum = await batchTranslate(summarySrc);
   candidates.forEach((c, i) => {
     if (c.summary && translatedSum[i] !== c.summary) stats.translated += 1;
     c.summary = (translatedSum[i] || "").trim();

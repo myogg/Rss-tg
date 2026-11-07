@@ -30,10 +30,9 @@ function bjDateLabel() {
 export async function runReport(mode, env) {
   const displayDate = bjDateLabel();
   const cache = await loadCache();
-  const apiKey = env.DEEPSEEK_API_KEY || null;
   // 封面抓取与 RSS 抓取并行，节省 30s 时限
   const coverPromise = buildCover(mode, displayDate, env);
-  const articles = await collectArticles(cache, apiKey);
+  const articles = await collectArticles(cache);
 
   if (!articles.length) {
     console.log(`[mode] ${mode} 今日无新动态，静默跳过（不推送）`);
@@ -96,7 +95,7 @@ export async function runReport(mode, env) {
 // 预览（不发送、不写缓存）：返回将推送的消息内容
 export async function previewReport(mode, env) {
   const cache = await loadCache();
-  const articles = await collectArticles(cache, env.DEEPSEEK_API_KEY || null);
+  const articles = await collectArticles(cache);
   if (!articles.length) return { mode, skipped: true };
   const groups = groupBySource(articles);
   const messages = buildReportMessages(groups, mode);

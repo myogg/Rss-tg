@@ -1,18 +1,18 @@
 // 本地验证：拉取真实 RSS、构建早报/晚报消息，断言约束（不发送、不写缓存）。
 // 运行：node scripts/verify.mjs [morning|evening]
-// 可选：DEEPSEEK_API_KEY=xxx node scripts/verify.mjs 测试真实翻译。
+// 可选：DEEPLX_API_BASE=https://... DEEPLX_TOKEN=xxx node scripts/verify.mjs 测试真实翻译。
 import { collectArticles, groupBySource } from "../netlify/functions/_lib/rss.js";
 import { buildReportMessages, visibleLength } from "../netlify/functions/_lib/report.js";
 import { loadCache } from "../netlify/functions/_lib/store.js";
 
 const mode = process.argv[2] === "evening" ? "evening" : "morning";
-const apiKey = process.env.DEEPSEEK_API_KEY || null;
+const deeplxBase = process.env.DEEPLX_API_BASE || "";
 
-console.log(`=== 验证模式: ${mode} | 翻译: ${apiKey ? "开启(真实 DeepSeek)" : "关闭(英文原文)"} ===`);
+console.log(`=== 验证模式: ${mode} | 翻译: ${deeplxBase ? `开启(${deeplxBase})` : "关闭(英文原文)"} ===`);
 
 const cache = await loadCache();
 const t0 = Date.now();
-const articles = await collectArticles(cache, apiKey);
+const articles = await collectArticles(cache);
 const tFetch = Date.now() - t0;
 
 if (!articles.length) {

@@ -120,14 +120,10 @@ export const TRANSLATE_BATCH = 20;
 export const USER_AGENT =
   "Mozilla/5.0 (compatible; RssTgBot/1.0; +https://github.com/myogg/Rss-tg)";
 
-// DeepSeek 翻译（未配置 DEEPSEEK_API_KEY 时英文原文照发）
-export const DEEPSEEK_API_BASE = "https://api.deepseek.com";
-export const DEEPSEEK_MODEL = "deepseek-chat";
-export const TRANSLATE_PROMPT =
-  "你是科技资讯翻译。把用户给的英文摘要译成简洁、地道的简体中文，控制在 150 字内。" +
-  "要求：1) 品牌名、公司名、产品名、模型名（如 OpenAI、Gemini、Qwen、NVIDIA）保持英文原样，不要音译或意译；" +
-  "2) 只输出译文，不要解释、不要加引号；" +
-  "3) 保持原意，不要扩写或删减。";
+// DeeplX 翻译（免费 DeepL 兼容接口；未配置 DEEPLX_API_BASE 时英文原文照发）
+// 二者均从 Netlify 环境变量读取，不写死、不进 git。
+export const DEEPLX_API_BASE = process.env.DEEPLX_API_BASE || "";
+export const DEEPLX_TOKEN = process.env.DEEPLX_TOKEN || "";
 
 // 报头图频道名兜底（取不到 Telegram 频道真实标题时使用）
 export const DEFAULT_CHANNEL_TITLE = "AI 每日速递";
